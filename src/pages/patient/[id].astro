@@ -137,7 +137,7 @@ const news2Table = [
   {
     label: 'Consciousness',
     param: 'Consciousness',
-    values: ['', '', '', 'Alert', '', '', 'Voice/Pain/Unresponsive'],
+    values: ['', '', '', 'Alert', '', '', 'CVPU'],
     ranges: [null, null, null, 0, null, null, 3],
   },
   {
@@ -159,53 +159,12 @@ const paramToPatientKey: Record<string, keyof Patient> = {
   'Temperature': 'temperature',
 };
 
-function valueInRange(value: number | string, rangeStr: string, rowParam?: string, rangeScore?: number): boolean {
-  if (!rangeStr) return false;
-  rangeStr = rangeStr.replace(/\s/g, '');
-  // Special handling for consciousness 3-score
-  if (rowParam === 'Consciousness' && rangeScore === 3) {
-    const matchList = ['Voice', 'Pain', 'Unresponsive', 'CVPU'];
-    const isListMatch = matchList.includes(value as string);
-    const isLabelMatch = typeof value === 'string' && typeof rangeStr === 'string' && rangeStr.toLowerCase().includes((value as string).toLowerCase());
-    return !!(isListMatch || isLabelMatch);
-  }
-  // Handle boolean for supplementalO2
-  if (typeof value === 'boolean') {
-    if (rangeStr.toLowerCase() === 'oxygen') return value === true;
-    if (rangeStr.toLowerCase() === 'air') return value === false;
-    return false;
-  }
-  if (typeof value !== 'number' && typeof value !== 'string') return false;
-  if (typeof value === 'number') {
-    if (rangeStr.startsWith('≤')) {
-      const n = parseFloat(rangeStr.slice(1));
-      return value <= n;
-    }
-    if (rangeStr.startsWith('≥')) {
-      const n = parseFloat(rangeStr.slice(1));
-      return value >= n;
-    }
-    if (rangeStr.includes('–')) {
-      const [min, max] = rangeStr.split('–').map(parseFloat);
-      return value >= min && value <= max;
-    }
-    if (/^\d+$/.test(rangeStr)) {
-      return value === parseFloat(rangeStr);
-    }
-  }
-  // For special cases like "Alert"
-  if (typeof value === 'string' && value && rangeStr && value.toLowerCase().includes(rangeStr.toLowerCase())) {
-    return true;
-  }
-  return false;
-}
-
 function isCellHighlighted(row: any, colIdx: number, patient: Patient): boolean {
   if (!patient) return false;
   const key = paramToPatientKey[row.param];
   const value = patient[key];
-  const paramScore = getNEWS2Score(row.param, value, patient);
-  return row.ranges[colIdx] !== null && paramScore === row.ranges[colIdx];
+  const score = getNEWS2Score(row.param, value, patient);
+  return row.ranges[colIdx] !== null && score === row.ranges[colIdx];
 }
 ---
 
@@ -444,26 +403,17 @@ function isCellHighlighted(row: any, colIdx: number, patient: Patient): boolean 
             </thead>
             <tbody>
               {news2Table.map(row => {
+                // Find the index of the cell that should be highlighted for this row
                 const key = paramToPatientKey[row.param];
                 const value = patient[key];
-                const paramScore = getNEWS2Score(row.param, value, patient);
+                const score = getNEWS2Score(row.param, value, patient);
+                const highlightIdx = row.ranges.findIndex(r => r === score && r !== null);
                 return (
                   <tr>
                     <td>{row.label}</td>
-                    {row.values.map((val, idx) => {
-                      let checkValue: string | number = value as string | number;
-                      if (typeof value === 'boolean') {
-                        checkValue = value ? 'Oxygen' : 'Air';
-                      }
-                      const shouldHighlight = (
-                        row.ranges[idx] !== null &&
-                        paramScore === row.ranges[idx] &&
-                        valueInRange(checkValue, val)
-                      );
-                      return (
-                        <td class={`score-${row.ranges[idx]} ${shouldHighlight ? 'highlight' : ''}`}>{val}</td>
-                      );
-                    })}
+                    {row.values.map((val, idx) => (
+                      <td class={`score-${row.ranges[idx]} ${idx === highlightIdx ? 'highlight' : ''}`}>{val}</td>
+                    ))}
                   </tr>
                 );
               })}
