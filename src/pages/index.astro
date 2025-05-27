@@ -1,63 +1,219 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import type { Patient } from '../types/PatientDTO';
+import { fetchAllPatients } from '../data/mockPatients';
 
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
+const patients = await fetchAllPatients();
+
+function calculateNEWS2(patient: Patient): number {
+  let score = 0;
+  if (patient.respiratoryRate > 20) score += 2;
+  if (patient.oxygenSaturation < 92) score += 3;
+  else if (patient.oxygenSaturation < 96) score += 1;
+  if (patient.temperature > 38 || patient.temperature < 36) score += 1;
+  if (patient.systolicBP < 110) score += 2;
+  if (patient.heartRate > 100 || patient.heartRate < 60) score += 1;
+  if (patient.consciousness !== 'Alert') score += 3;
+  if (patient.supplementalO2) score += 2;
+  return score;
+}
+
+function getNews2Risk(score: number) {
+  if (score <= 4) return { label: 'Low', color: '#22c55e' };
+  if (score <= 6) return { label: 'Medium', color: '#eab308' };
+  if (score <= 8) return { label: 'High', color: '#f97316' };
+  return { label: 'Critical', color: '#ef4444' };
+}
+
+const filterOptions = ['All', 'Critical', 'Medium'];
 ---
 
 <style>
-  .home-container {
-    max-width: 600px;
-    margin: 4em auto 0 auto;
-    background: #fff;
-    border-radius: 18px;
-    box-shadow: 0 4px 32px 0 #1e293b18;
-    padding: 2.5em 2em 2em 2em;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 1.5em;
+  .overview-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 2.5em 1em 2em 1em;
   }
-  .home-title {
+  .overview-title {
     font-size: 2.2em;
     font-weight: 800;
     color: #1d4ed8;
-    margin-bottom: 0.2em;
+    margin-bottom: 0.7em;
     text-align: center;
     letter-spacing: 0.01em;
   }
-  .home-desc {
-    color: #64748b;
-    font-size: 1.15em;
-    text-align: center;
-    margin-bottom: 1em;
+  .patient-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 2px 16px #1e293b0a;
+    overflow: hidden;
   }
-  .home-link {
+  .patient-table th {
+    background: #f8fafc;
+    color: #1e293b;
+    font-weight: 600;
+    text-align: left;
+    padding: 1em;
+    border-bottom: 2px solid #e2e8f0;
+  }
+  .patient-table td {
+    padding: 1em;
+    border-bottom: 1px solid #e2e8f0;
+    color: #1e293b;
+  }
+  .patient-table tr:last-child td {
+    border-bottom: none;
+  }
+  .patient-table tr:hover {
+    background: #f8fafc;
+  }
+  .patient-name {
+    font-weight: 600;
+    color: #1e293b;
+  }
+  .patient-age {
+    color: #64748b;
+    font-size: 0.95em;
+  }
+  .news2-score-badge {
+    font-size: 1.1em;
+    font-weight: 800;
+    border-radius: 6px;
+    padding: 0.3em 0.8em;
+    color: #fff;
     display: inline-block;
+  }
+  .news2-score-badge.low { background: #22c55e; }
+  .news2-score-badge.medium { background: #eab308; color: #1e293b; }
+  .news2-score-badge.high { background: #f97316; }
+  .news2-score-badge.critical { background: #ef4444; }
+  .patient-link {
+    text-decoration: none;
+    color: #1d4ed8;
+    font-weight: 600;
+    font-size: 1em;
+    background: #e0e7ef;
+    border-radius: 6px;
+    padding: 0.4em 1em;
+    transition: background 0.2s, color 0.2s;
+  }
+  .patient-link:hover {
     background: #1d4ed8;
     color: #fff;
-    font-weight: 700;
-    font-size: 1.15em;
-    border-radius: 10px;
-    padding: 0.8em 2em;
-    text-decoration: none;
-    box-shadow: 0 2px 8px #1d4ed822;
-    transition: background 0.2s, color 0.2s;
-    margin-top: 1em;
   }
-  .home-link:hover {
-    background: #3245ff;
+  .filter-bar {
+    display: flex;
+    gap: 1em;
+    justify-content: center;
+    margin-bottom: 2em;
+  }
+  .filter-btn {
+    background: #e0e7ef;
+    color: #1d4ed8;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
+    padding: 0.5em 1.5em;
+    font-size: 1.08em;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+  }
+  .filter-btn.active, .filter-btn:focus {
+    background: #1d4ed8;
     color: #fff;
+    outline: none;
+  }
+  .filter-btn:hover {
+    background: #60a5fa;
+    color: #fff;
+  }
+  @media (max-width: 700px) {
+    .overview-container { 
+      padding: 1.2em 0.2em; 
+    }
+    .patient-table {
+      display: block;
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+    .patient-table th,
+    .patient-table td {
+      padding: 0.8em;
+    }
   }
 </style>
 
 <Layout>
-  <div class="home-container">
-    <div class="home-title">Welcome to the NEWS2 Dashboard</div>
-    <div class="home-desc">
-      This app helps you view and score patients using the National Early Warning Score 2 (NEWS2) system.<br /><br />
-      Click below to view all patients and their NEWS2 scores.
+  <div class="overview-container">
+    <div class="overview-title">NEWS2 Patient Overview</div>
+    <div class="filter-bar" id="filter-bar">
+      {filterOptions.map(option => (
+        <button type="button" class="filter-btn" data-filter={option}>{option}</button>
+      ))}
     </div>
-    <a href="/news2" class="home-link">Go to NEWS2 Overview</a>
+    <table class="patient-table" id="patient-list">
+      <thead>
+        <tr>
+          <th>Patient</th>
+          <th>Age</th>
+          <th>Risk Level</th>
+          <th>NEWS2 Score</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {patients.map((patient: Patient) => {
+          const score = calculateNEWS2(patient);
+          const risk = getNews2Risk(score);
+          let riskClass = 'low';
+          if (risk.label === 'Medium') riskClass = 'medium';
+          else if (risk.label === 'High') riskClass = 'high';
+          else if (risk.label === 'Critical') riskClass = 'critical';
+          return (
+            <tr data-risk={risk.label}>
+              <td>
+                <div class="patient-name">{patient.name}</div>
+              </td>
+              <td>
+                <div class="patient-age">{patient.age}</div>
+              </td>
+              <td>{risk.label}</td>
+              <td>
+                <span class={`news2-score-badge ${riskClass}`}>{score}</span>
+              </td>
+              <td>
+                <a href={`/patient/${patient.id}`} class="patient-link">View Details</a>
+              </td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
   </div>
-</Layout>
+  <script type="module">
+    const filterBar = document.getElementById('filter-bar');
+    const patientList = document.getElementById('patient-list');
+    if (filterBar && patientList) {
+      filterBar.addEventListener('click', (e) => {
+        if (e.target && e.target.matches('button[data-filter]')) {
+          const selected = e.target.getAttribute('data-filter');
+          // Set active class
+          filterBar.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
+          e.target.classList.add('active');
+          // Show/hide patients
+          patientList.querySelectorAll('tbody tr').forEach(row => {
+            if (selected === 'All' || row.getAttribute('data-risk') === selected) {
+              row.style.display = '';
+            } else {
+              row.style.display = 'none';
+            }
+          });
+        }
+      });
+      // Set 'All' as active by default
+      filterBar.querySelector('button[data-filter="All"]').classList.add('active');
+    }
+  </script>
+</Layout> 

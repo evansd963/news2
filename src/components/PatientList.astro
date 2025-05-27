@@ -61,7 +61,7 @@ function calculateNEWS2(patient) {
         <strong>{patient.name}</strong> (Age: {patient.age})<br />
         NEWS2 Score: <span style="font-weight: bold; color: #3245ff;">{calculateNEWS2(patient)}</span>
       </div>
-      <a href={`/news2/${patient.id}`} style="text-decoration: underline; color: #3245ff;">View Details</a>
+      <a href={`/patient/${patient.id}`} style="text-decoration: underline; color: #3245ff;">View Details</a>
     </li>
   ))}
 </ul> 
