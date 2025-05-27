@@ -1,10 +1,11 @@
 ---
 import Layout from '../../layouts/Layout.astro';
+import type { Patient } from '../../types/PatientDTO';
 
 // Mock async fetch function (replace with real DB/API call in the future)
-async function fetchPatientById(id: string) {
+async function fetchPatientById(id: string): Promise<Patient | null> {
   // Simulate DB/API data
-  const patients = [
+  const patients: Patient[] = [
     {
       id: '1',
       name: 'John Doe',
@@ -45,19 +46,14 @@ async function fetchPatientById(id: string) {
   return patients.find((p) => p.id === id) || null;
 }
 
-export async function get({ params }: { params: { id: string } }) {
-  const { id } = params;
-  const patient = await fetchPatientById(id);
-  return {
-    props: {
-      patient,
-    },
-  };
+// Get the ID from the URL and fetch the patient
+const { id } = Astro.params;
+if (!id) {
+  return Astro.redirect('/news2');
 }
+const patient = await fetchPatientById(id);
 
-const { patient } = Astro.props;
-
-function calculateNEWS2(patient: any) {
+function calculateNEWS2(patient: Patient | null): number | null {
   if (!patient) return null;
   let score = 0;
   if (patient.respiratoryRate > 20) score += 2;
@@ -72,17 +68,151 @@ function calculateNEWS2(patient: any) {
 }
 
 const score = patient ? calculateNEWS2(patient) : null;
+
+// NEWS2 chart data and scoring functions
+const news2Chart = [
+  {
+    label: 'Respiration rate (per minute)',
+    value: patient?.respiratoryRate,
+    ranges: [
+      { label: '≤8', score: 3, min: -Infinity, max: 8 },
+      { label: '9–11', score: 1, min: 9, max: 11 },
+      { label: '12–20', score: 0, min: 12, max: 20 },
+      { label: '21–24', score: 2, min: 21, max: 24 },
+      { label: '≥25', score: 3, min: 25, max: Infinity },
+    ],
+  },
+  {
+    label: 'SpO₂ Scale 1 (%)',
+    value: patient?.oxygenSaturation,
+    ranges: [
+      { label: '≤91', score: 3, min: -Infinity, max: 91 },
+      { label: '92–93', score: 2, min: 92, max: 93 },
+      { label: '94–95', score: 1, min: 94, max: 95 },
+      { label: '≥96', score: 0, min: 96, max: Infinity },
+    ],
+  },
+  {
+    label: 'SpO₂ Scale 2 (%)',
+    value: patient?.oxygenSaturation,
+    ranges: [
+      { label: '≤83', score: 3, min: -Infinity, max: 83 },
+      { label: '84–85', score: 2, min: 84, max: 85 },
+      { label: '86–87', score: 1, min: 86, max: 87 },
+      { label: '88–92', score: 0, min: 88, max: 92 },
+      { label: '≥93 on air', score: 0, min: 93, max: Infinity, airOnly: true },
+      { label: '93–94 on oxygen', score: 1, min: 93, max: 94, oxygenOnly: true },
+      { label: '95–96 on oxygen', score: 2, min: 95, max: 96, oxygenOnly: true },
+      { label: '≥97 on oxygen', score: 3, min: 97, max: Infinity, oxygenOnly: true },
+    ],
+  },
+  {
+    label: 'Air or oxygen?',
+    value: patient?.supplementalO2,
+    ranges: [
+      { label: 'Oxygen', score: 2, value: true },
+      { label: 'Air', score: 0, value: false },
+    ],
+  },
+  {
+    label: 'Systolic blood pressure (mmHg)',
+    value: patient?.systolicBP,
+    ranges: [
+      { label: '≤90', score: 3, min: -Infinity, max: 90 },
+      { label: '91–100', score: 2, min: 91, max: 100 },
+      { label: '101–110', score: 1, min: 101, max: 110 },
+      { label: '111–219', score: 0, min: 111, max: 219 },
+      { label: '≥220', score: 3, min: 220, max: Infinity },
+    ],
+  },
+  {
+    label: 'Pulse (per minute)',
+    value: patient?.heartRate,
+    ranges: [
+      { label: '≤40', score: 3, min: -Infinity, max: 40 },
+      { label: '41–50', score: 1, min: 41, max: 50 },
+      { label: '51–90', score: 0, min: 51, max: 90 },
+      { label: '91–110', score: 1, min: 91, max: 110 },
+      { label: '111–130', score: 2, min: 111, max: 130 },
+      { label: '≥131', score: 3, min: 131, max: Infinity },
+    ],
+  },
+  {
+    label: 'Consciousness',
+    value: patient?.consciousness,
+    ranges: [
+      { label: 'Alert', score: 0, value: 'Alert' },
+      { label: 'Voice', score: 3, value: 'Voice' },
+      { label: 'Pain', score: 3, value: 'Pain' },
+      { label: 'Unresponsive', score: 3, value: 'Unresponsive' },
+      { label: 'CVPU', score: 3, value: 'CVPU' },
+    ],
+  },
+  {
+    label: 'Temperature (°C)',
+    value: patient?.temperature,
+    ranges: [
+      { label: '≤35.0', score: 3, min: -Infinity, max: 35 },
+      { label: '35.1–36.0', score: 1, min: 35.1, max: 36 },
+      { label: '36.1–38.0', score: 0, min: 36.1, max: 38 },
+      { label: '38.1–39.0', score: 1, min: 38.1, max: 39 },
+      { label: '≥39.1', score: 3, min: 39.1, max: Infinity },
+    ],
+  },
+];
+
+function isInRange(val: any, range: any) {
+  if (typeof range.value !== 'undefined') return val === range.value;
+  if (typeof range.airOnly !== 'undefined' && range.airOnly) return val >= range.min && val <= range.max && patient?.supplementalO2 === false;
+  if (typeof range.oxygenOnly !== 'undefined' && range.oxygenOnly) return val >= range.min && val <= range.max && patient?.supplementalO2 === true;
+  return val >= range.min && val <= range.max;
+}
 ---
+
+<style>
+  .news2-table { border-collapse: collapse; width: 100%; margin: 2em 0; }
+  .news2-table th, .news2-table td { border: 1px solid #ccc; padding: 0.5em 1em; text-align: center; }
+  .news2-table th { background: #e6eaff; }
+  .score-3 { background: #e57373 !important; color: #fff; }    /* Red */
+  .score-2 { background: #ffb74d !important; color: #000; }    /* Orange/Amber */
+  .score-1 { background: #fff176 !important; color: #000; }    /* Yellow */
+  .score-0 { background: #fff !important; color: #000; }       /* White */
+  .highlight { border: 2px solid #3245ff !important; }
+</style>
 
 <Layout>
   {patient ? (
-    <div style="max-width: 600px; margin: 2em auto; background: #fafafa; padding: 2em; border-radius: 12px;">
+    <div style="max-width: 700px; margin: 2em auto; background: #fafafa; padding: 2em; border-radius: 12px;">
       <h2>{patient.name} (Age: {patient.age})</h2>
       <h3>NEWS2 Score: <span style="color: #3245ff">{score}</span></h3>
       <div style="margin: 1em 0;">
         <div style={`background: #3245ff; height: 100%; border-radius: 8px; width: ${(score ?? 0) * 10}%`} />
       </div>
       <small>Graphical representation (bar length = score x 10%)</small>
+      <table class="news2-table">
+        <thead>
+          <tr>
+            <th>Parameter</th>
+            <th>3</th>
+            <th>2</th>
+            <th>1</th>
+            <th>0</th>
+            <th>1</th>
+            <th>2</th>
+            <th>3</th>
+          </tr>
+        </thead>
+        <tbody>
+          {news2Chart.map(row => (
+            <tr>
+              <td>{row.label}</td>
+              {row.ranges.map(range => (
+                <td class={`score-${range.score} ${isInRange(row.value, range) ? 'highlight' : ''}`}>{range.label}</td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
       <ul style="padding-left: 0; list-style: none;">
         <li><strong>Respiratory Rate:</strong> {patient.respiratoryRate}</li>
         <li><strong>Oxygen Saturation:</strong> {patient.oxygenSaturation}</li>

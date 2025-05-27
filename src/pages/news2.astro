@@ -1,9 +1,85 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import PatientList from '../components/PatientList.astro';
+import type { Patient } from '../types/PatientDTO';
+
+// Mock async fetch function (replace with real DB/API call in the future)
+async function fetchAllPatients(): Promise<Patient[]> {
+  // Simulate DB/API data
+  const patients: Patient[] = [
+    {
+      id: '1',
+      name: 'John Doe',
+      age: 65,
+      respiratoryRate: 18,
+      oxygenSaturation: 95,
+      temperature: 37.2,
+      systolicBP: 120,
+      heartRate: 85,
+      consciousness: 'Alert',
+      supplementalO2: false,
+    },
+    {
+      id: '2',
+      name: 'Jane Smith',
+      age: 72,
+      respiratoryRate: 22,
+      oxygenSaturation: 90,
+      temperature: 38.1,
+      systolicBP: 105,
+      heartRate: 110,
+      consciousness: 'Voice',
+      supplementalO2: true,
+    },
+    {
+      id: '3',
+      name: 'Alice Brown',
+      age: 58,
+      respiratoryRate: 16,
+      oxygenSaturation: 98,
+      temperature: 36.5,
+      systolicBP: 130,
+      heartRate: 75,
+      consciousness: 'Alert',
+      supplementalO2: false,
+    },
+  ];
+  return patients;
+}
+
+// Fetch patients on each request
+const patients = await fetchAllPatients();
+
+function calculateNEWS2(patient: Patient): number {
+  let score = 0;
+  if (patient.respiratoryRate > 20) score += 2;
+  if (patient.oxygenSaturation < 92) score += 3;
+  else if (patient.oxygenSaturation < 96) score += 1;
+  if (patient.temperature > 38 || patient.temperature < 36) score += 1;
+  if (patient.systolicBP < 110) score += 2;
+  if (patient.heartRate > 100 || patient.heartRate < 60) score += 1;
+  if (patient.consciousness !== 'Alert') score += 3;
+  if (patient.supplementalO2) score += 2;
+  return score;
+}
 ---
 
 <Layout>
   <h1>NEWS2 Patient Overview</h1>
-  <PatientList />
+  {patients.length > 0 ? (
+    <ul style="list-style: none; padding: 0; max-width: 600px; margin: 2em auto;">
+      {patients.map((patient: Patient) => (
+        <li style="background: #fafafa; margin-bottom: 1em; padding: 1em; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <strong>{patient.name}</strong> (Age: {patient.age})<br />
+            NEWS2 Score: <span style="font-weight: bold; color: #3245ff;">{calculateNEWS2(patient)}</span>
+          </div>
+          <a href={`/news2/${patient.id}`} style="text-decoration: underline; color: #3245ff;">View Details</a>
+        </li>
+      ))}
+    </ul>
+  ) : (
+    <div style="text-align: center; margin: 2em;">
+      <p>No patients found</p>
+    </div>
+  )}
 </Layout> 
