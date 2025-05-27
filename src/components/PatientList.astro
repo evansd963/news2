@@ -1,0 +1,67 @@
+---
+// Mocked patient data and NEWS2 calculation
+const patients = [
+  {
+    id: '1',
+    name: 'John Doe',
+    age: 65,
+    respiratoryRate: 18,
+    oxygenSaturation: 95,
+    temperature: 37.2,
+    systolicBP: 120,
+    heartRate: 85,
+    consciousness: 'Alert',
+    supplementalO2: false,
+  },
+  {
+    id: '2',
+    name: 'Jane Smith',
+    age: 72,
+    respiratoryRate: 22,
+    oxygenSaturation: 90,
+    temperature: 38.1,
+    systolicBP: 105,
+    heartRate: 110,
+    consciousness: 'Voice',
+    supplementalO2: true,
+  },
+  {
+    id: '3',
+    name: 'Alice Brown',
+    age: 58,
+    respiratoryRate: 16,
+    oxygenSaturation: 98,
+    temperature: 36.5,
+    systolicBP: 130,
+    heartRate: 75,
+    consciousness: 'Alert',
+    supplementalO2: false,
+  },
+];
+
+function calculateNEWS2(patient) {
+  // Simplified NEWS2 calculation for demo
+  let score = 0;
+  if (patient.respiratoryRate > 20) score += 2;
+  if (patient.oxygenSaturation < 92) score += 3;
+  else if (patient.oxygenSaturation < 96) score += 1;
+  if (patient.temperature > 38 || patient.temperature < 36) score += 1;
+  if (patient.systolicBP < 110) score += 2;
+  if (patient.heartRate > 100 || patient.heartRate < 60) score += 1;
+  if (patient.consciousness !== 'Alert') score += 3;
+  if (patient.supplementalO2) score += 2;
+  return score;
+}
+---
+
+<ul style="list-style: none; padding: 0; max-width: 600px; margin: 2em auto;">
+  {patients.map(patient => (
+    <li style="background: #fafafa; margin-bottom: 1em; padding: 1em; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <strong>{patient.name}</strong> (Age: {patient.age})<br />
+        NEWS2 Score: <span style="font-weight: bold; color: #3245ff;">{calculateNEWS2(patient)}</span>
+      </div>
+      <a href={`/news2/${patient.id}`} style="text-decoration: underline; color: #3245ff;">View Details</a>
+    </li>
+  ))}
+</ul> 

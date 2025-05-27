@@ -1,0 +1,103 @@
+---
+import Layout from '../../layouts/Layout.astro';
+
+// Mock async fetch function (replace with real DB/API call in the future)
+async function fetchPatientById(id: string) {
+  // Simulate DB/API data
+  const patients = [
+    {
+      id: '1',
+      name: 'John Doe',
+      age: 65,
+      respiratoryRate: 18,
+      oxygenSaturation: 95,
+      temperature: 37.2,
+      systolicBP: 120,
+      heartRate: 85,
+      consciousness: 'Alert',
+      supplementalO2: false,
+    },
+    {
+      id: '2',
+      name: 'Jane Smith',
+      age: 72,
+      respiratoryRate: 22,
+      oxygenSaturation: 90,
+      temperature: 38.1,
+      systolicBP: 105,
+      heartRate: 110,
+      consciousness: 'Voice',
+      supplementalO2: true,
+    },
+    {
+      id: '3',
+      name: 'Alice Brown',
+      age: 58,
+      respiratoryRate: 16,
+      oxygenSaturation: 98,
+      temperature: 36.5,
+      systolicBP: 130,
+      heartRate: 75,
+      consciousness: 'Alert',
+      supplementalO2: false,
+    },
+  ];
+  return patients.find((p) => p.id === id) || null;
+}
+
+export async function get({ params }: { params: { id: string } }) {
+  const { id } = params;
+  const patient = await fetchPatientById(id);
+  return {
+    props: {
+      patient,
+    },
+  };
+}
+
+const { patient } = Astro.props;
+
+function calculateNEWS2(patient: any) {
+  if (!patient) return null;
+  let score = 0;
+  if (patient.respiratoryRate > 20) score += 2;
+  if (patient.oxygenSaturation < 92) score += 3;
+  else if (patient.oxygenSaturation < 96) score += 1;
+  if (patient.temperature > 38 || patient.temperature < 36) score += 1;
+  if (patient.systolicBP < 110) score += 2;
+  if (patient.heartRate > 100 || patient.heartRate < 60) score += 1;
+  if (patient.consciousness !== 'Alert') score += 3;
+  if (patient.supplementalO2) score += 2;
+  return score;
+}
+
+const score = patient ? calculateNEWS2(patient) : null;
+---
+
+<Layout>
+  {patient ? (
+    <div style="max-width: 600px; margin: 2em auto; background: #fafafa; padding: 2em; border-radius: 12px;">
+      <h2>{patient.name} (Age: {patient.age})</h2>
+      <h3>NEWS2 Score: <span style="color: #3245ff">{score}</span></h3>
+      <div style="margin: 1em 0;">
+        <div style={`background: #3245ff; height: 100%; border-radius: 8px; width: ${(score ?? 0) * 10}%`} />
+      </div>
+      <small>Graphical representation (bar length = score x 10%)</small>
+      <ul style="padding-left: 0; list-style: none;">
+        <li><strong>Respiratory Rate:</strong> {patient.respiratoryRate}</li>
+        <li><strong>Oxygen Saturation:</strong> {patient.oxygenSaturation}</li>
+        <li><strong>Temperature:</strong> {patient.temperature} °C</li>
+        <li><strong>Systolic BP:</strong> {patient.systolicBP}</li>
+        <li><strong>Heart Rate:</strong> {patient.heartRate}</li>
+        <li><strong>Consciousness:</strong> {patient.consciousness}</li>
+        <li><strong>Supplemental O2:</strong> {patient.supplementalO2 ? 'Yes' : 'No'}</li>
+      </ul>
+      <a href="/news2" style="display: inline-block; margin-top: 1em; color: #3245ff;">&larr; Back to overview</a>
+    </div>
+  ) : (
+    <div style="text-align: center; margin: 2em;">
+      <h2>Patient not found</h2>
+      <a href="/news2" style="color: #3245ff;">&larr; Back to overview</a>
+    </div>
+  )}
+</Layout> 

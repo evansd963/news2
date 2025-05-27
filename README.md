@@ -46,3 +46,24 @@ All commands are run from the root of the project, from a terminal:
 ## 👀 Want to learn more?
 
 Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+
+## Running Locally
+
+```bash
+npm install
+npm run dev
+```
+
+Visit http://localhost:4321 to view the app.
+
+## Deployment
+
+This app is ready to be deployed to Cloudserve Pages. Build with:
+
+```bash
+npm run build
+```
+
+## Patient Data Structure
+
+Patient data is defined using a `PatientDTO` TypeScript interface in `src/types/PatientDTO.ts`. The app currently uses mocked data, but is structured for future API or database integration.
