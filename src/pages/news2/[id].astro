@@ -1,229 +1,439 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import type { Patient } from '../../types/PatientDTO';
+import { fetchPatientById } from '../../data/mockPatients';
 
-// Mock async fetch function (replace with real DB/API call in the future)
-async function fetchPatientById(id: string): Promise<Patient | null> {
-  // Simulate DB/API data
-  const patients: Patient[] = [
-    {
-      id: '1',
-      name: 'John Doe',
-      age: 65,
-      respiratoryRate: 18,
-      oxygenSaturation: 95,
-      temperature: 37.2,
-      systolicBP: 120,
-      heartRate: 85,
-      consciousness: 'Alert',
-      supplementalO2: false,
-    },
-    {
-      id: '2',
-      name: 'Jane Smith',
-      age: 72,
-      respiratoryRate: 22,
-      oxygenSaturation: 90,
-      temperature: 38.1,
-      systolicBP: 105,
-      heartRate: 110,
-      consciousness: 'Voice',
-      supplementalO2: true,
-    },
-    {
-      id: '3',
-      name: 'Alice Brown',
-      age: 58,
-      respiratoryRate: 16,
-      oxygenSaturation: 98,
-      temperature: 36.5,
-      systolicBP: 130,
-      heartRate: 75,
-      consciousness: 'Alert',
-      supplementalO2: false,
-    },
-  ];
-  return patients.find((p) => p.id === id) || null;
-}
-
-// Get the ID from the URL and fetch the patient
 const { id } = Astro.params;
 if (!id) {
   return Astro.redirect('/news2');
 }
 const patient = await fetchPatientById(id);
 
-function calculateNEWS2(patient: Patient | null): number | null {
-  if (!patient) return null;
-  let score = 0;
-  if (patient.respiratoryRate > 20) score += 2;
-  if (patient.oxygenSaturation < 92) score += 3;
-  else if (patient.oxygenSaturation < 96) score += 1;
-  if (patient.temperature > 38 || patient.temperature < 36) score += 1;
-  if (patient.systolicBP < 110) score += 2;
-  if (patient.heartRate > 100 || patient.heartRate < 60) score += 1;
-  if (patient.consciousness !== 'Alert') score += 3;
-  if (patient.supplementalO2) score += 2;
-  return score;
+// NEWS2 scoring logic based on the official chart
+function getNEWS2Score(param: string, value: any, patient: Patient): number {
+  switch (param) {
+    case 'Respiration rate':
+      if (value <= 8) return 3;
+      if (value >= 9 && value <= 11) return 1;
+      if (value >= 12 && value <= 20) return 0;
+      if (value >= 21 && value <= 24) return 2;
+      if (value >= 25) return 3;
+      break;
+    case 'SpO2 Scale 1':
+      if (value <= 91) return 3;
+      if (value >= 92 && value <= 93) return 2;
+      if (value >= 94 && value <= 95) return 1;
+      if (value >= 96) return 0;
+      break;
+    case 'SpO2 Scale 2':
+      if (value <= 83) return 3;
+      if (value >= 84 && value <= 85) return 2;
+      if (value >= 86 && value <= 87) return 1;
+      if (value >= 88 && value <= 92) return 0;
+      // On air
+      if (value >= 93 && patient.supplementalO2 === false) return 0;
+      // On oxygen
+      if (value >= 93 && value <= 94 && patient.supplementalO2 === true) return 1;
+      if (value >= 95 && value <= 96 && patient.supplementalO2 === true) return 2;
+      if (value >= 97 && patient.supplementalO2 === true) return 3;
+      break;
+    case 'Air or oxygen':
+      return patient.supplementalO2 ? 2 : 0;
+    case 'Systolic BP':
+      if (value <= 90) return 3;
+      if (value >= 91 && value <= 100) return 2;
+      if (value >= 101 && value <= 110) return 1;
+      if (value >= 111 && value <= 219) return 0;
+      if (value >= 220) return 3;
+      break;
+    case 'Pulse':
+      if (value <= 40) return 3;
+      if (value >= 41 && value <= 50) return 1;
+      if (value >= 51 && value <= 90) return 0;
+      if (value >= 91 && value <= 110) return 1;
+      if (value >= 111 && value <= 130) return 2;
+      if (value >= 131) return 3;
+      break;
+    case 'Consciousness':
+      if (value === 'Alert') return 0;
+      if (['Voice', 'Pain', 'Unresponsive', 'CVPU'].includes(value)) return 3;
+      break;
+    case 'Temperature':
+      if (value <= 35.0) return 3;
+      if (value > 35.0 && value <= 36.0) return 1;
+      if (value > 36.0 && value <= 38.0) return 0;
+      if (value > 38.0 && value <= 39.0) return 1;
+      if (value > 39.0) return 3;
+      break;
+    default:
+      return 0;
+  }
+  return 0;
 }
 
-const score = patient ? calculateNEWS2(patient) : null;
+function calculateNEWS2Total(patient: Patient): number {
+  if (!patient) return 0;
+  let total = 0;
+  total += getNEWS2Score('Respiration rate', patient.respiratoryRate, patient);
+  total += getNEWS2Score('SpO2 Scale 1', patient.oxygenSaturation, patient);
+  total += getNEWS2Score('Air or oxygen', patient.supplementalO2, patient);
+  total += getNEWS2Score('Systolic BP', patient.systolicBP, patient);
+  total += getNEWS2Score('Pulse', patient.heartRate, patient);
+  total += getNEWS2Score('Consciousness', patient.consciousness, patient);
+  total += getNEWS2Score('Temperature', patient.temperature, patient);
+  return total;
+}
 
-// NEWS2 chart data and scoring functions
-const news2Chart = [
+const score = patient ? calculateNEWS2Total(patient) : null;
+
+// Add helper for risk category and color
+function getNews2Risk(score: number) {
+  if (score <= 4) return { label: 'Low risk', color: '#22c55e', bar: '#bbf7d0' };
+  if (score <= 6) return { label: 'Medium risk', color: '#eab308', bar: '#fef08a' };
+  if (score <= 8) return { label: 'High risk', color: '#f97316', bar: '#fdba74' };
+  return { label: 'Critical risk', color: '#ef4444', bar: '#fecaca' };
+}
+const maxNews2Score = 20;
+const risk = getNews2Risk(score ?? 0);
+
+// Table structure matching the official NEWS2 chart
+const news2Table = [
   {
     label: 'Respiration rate (per minute)',
-    value: patient?.respiratoryRate,
-    ranges: [
-      { label: '≤8', score: 3, min: -Infinity, max: 8 },
-      { label: '9–11', score: 1, min: 9, max: 11 },
-      { label: '12–20', score: 0, min: 12, max: 20 },
-      { label: '21–24', score: 2, min: 21, max: 24 },
-      { label: '≥25', score: 3, min: 25, max: Infinity },
-    ],
+    param: 'Respiration rate',
+    values: ['≤8', '9–11', '', '12–20', '', '21–24', '≥25'],
+    ranges: [3, 1, null, 0, null, 2, 3],
   },
   {
     label: 'SpO₂ Scale 1 (%)',
-    value: patient?.oxygenSaturation,
-    ranges: [
-      { label: '≤91', score: 3, min: -Infinity, max: 91 },
-      { label: '92–93', score: 2, min: 92, max: 93 },
-      { label: '94–95', score: 1, min: 94, max: 95 },
-      { label: '≥96', score: 0, min: 96, max: Infinity },
-    ],
+    param: 'SpO2 Scale 1',
+    values: ['≤91', '92–93', '94–95', '≥96', '', '', ''],
+    ranges: [3, 2, 1, 0, null, null, null],
   },
   {
     label: 'SpO₂ Scale 2 (%)',
-    value: patient?.oxygenSaturation,
-    ranges: [
-      { label: '≤83', score: 3, min: -Infinity, max: 83 },
-      { label: '84–85', score: 2, min: 84, max: 85 },
-      { label: '86–87', score: 1, min: 86, max: 87 },
-      { label: '88–92', score: 0, min: 88, max: 92 },
-      { label: '≥93 on air', score: 0, min: 93, max: Infinity, airOnly: true },
-      { label: '93–94 on oxygen', score: 1, min: 93, max: 94, oxygenOnly: true },
-      { label: '95–96 on oxygen', score: 2, min: 95, max: 96, oxygenOnly: true },
-      { label: '≥97 on oxygen', score: 3, min: 97, max: Infinity, oxygenOnly: true },
-    ],
+    param: 'SpO2 Scale 2',
+    values: ['≤83', '84–85', '86–87', '88–92', '93–94 on oxygen', '95–96 on oxygen', '≥97 on oxygen'],
+    ranges: [3, 2, 1, 0, 1, 2, 3],
   },
   {
     label: 'Air or oxygen?',
-    value: patient?.supplementalO2,
-    ranges: [
-      { label: 'Oxygen', score: 2, value: true },
-      { label: 'Air', score: 0, value: false },
-    ],
+    param: 'Air or oxygen',
+    values: ['Oxygen', '', '', 'Air', '', '', ''],
+    ranges: [2, null, null, 0, null, null, null],
   },
   {
     label: 'Systolic blood pressure (mmHg)',
-    value: patient?.systolicBP,
-    ranges: [
-      { label: '≤90', score: 3, min: -Infinity, max: 90 },
-      { label: '91–100', score: 2, min: 91, max: 100 },
-      { label: '101–110', score: 1, min: 101, max: 110 },
-      { label: '111–219', score: 0, min: 111, max: 219 },
-      { label: '≥220', score: 3, min: 220, max: Infinity },
-    ],
+    param: 'Systolic BP',
+    values: ['≤90', '91–100', '101–110', '111–219', '', '', '≥220'],
+    ranges: [3, 2, 1, 0, null, null, 3],
   },
   {
     label: 'Pulse (per minute)',
-    value: patient?.heartRate,
-    ranges: [
-      { label: '≤40', score: 3, min: -Infinity, max: 40 },
-      { label: '41–50', score: 1, min: 41, max: 50 },
-      { label: '51–90', score: 0, min: 51, max: 90 },
-      { label: '91–110', score: 1, min: 91, max: 110 },
-      { label: '111–130', score: 2, min: 111, max: 130 },
-      { label: '≥131', score: 3, min: 131, max: Infinity },
-    ],
+    param: 'Pulse',
+    values: ['≤40', '', '41–50', '51–90', '91–110', '111–130', '≥131'],
+    ranges: [3, null, 1, 0, 1, 2, 3],
   },
   {
     label: 'Consciousness',
-    value: patient?.consciousness,
-    ranges: [
-      { label: 'Alert', score: 0, value: 'Alert' },
-      { label: 'Voice', score: 3, value: 'Voice' },
-      { label: 'Pain', score: 3, value: 'Pain' },
-      { label: 'Unresponsive', score: 3, value: 'Unresponsive' },
-      { label: 'CVPU', score: 3, value: 'CVPU' },
-    ],
+    param: 'Consciousness',
+    values: ['', '', '', 'Alert', '', '', 'CVPU'],
+    ranges: [null, null, null, 0, null, null, 3],
   },
   {
     label: 'Temperature (°C)',
-    value: patient?.temperature,
-    ranges: [
-      { label: '≤35.0', score: 3, min: -Infinity, max: 35 },
-      { label: '35.1–36.0', score: 1, min: 35.1, max: 36 },
-      { label: '36.1–38.0', score: 0, min: 36.1, max: 38 },
-      { label: '38.1–39.0', score: 1, min: 38.1, max: 39 },
-      { label: '≥39.1', score: 3, min: 39.1, max: Infinity },
-    ],
+    param: 'Temperature',
+    values: ['≤35.0', '35.1–36.0', '', '36.1–38.0', '38.1–39.0', '', '≥39.1'],
+    ranges: [3, 1, null, 0, 1, null, 3],
   },
 ];
 
-function isInRange(val: any, range: any) {
-  if (typeof range.value !== 'undefined') return val === range.value;
-  if (typeof range.airOnly !== 'undefined' && range.airOnly) return val >= range.min && val <= range.max && patient?.supplementalO2 === false;
-  if (typeof range.oxygenOnly !== 'undefined' && range.oxygenOnly) return val >= range.min && val <= range.max && patient?.supplementalO2 === true;
-  return val >= range.min && val <= range.max;
+const paramToPatientKey: Record<string, keyof Patient> = {
+  'Respiration rate': 'respiratoryRate',
+  'SpO2 Scale 1': 'oxygenSaturation',
+  'SpO2 Scale 2': 'oxygenSaturation',
+  'Air or oxygen': 'supplementalO2',
+  'Systolic BP': 'systolicBP',
+  'Pulse': 'heartRate',
+  'Consciousness': 'consciousness',
+  'Temperature': 'temperature',
+};
+
+function isCellHighlighted(row: any, colIdx: number, patient: Patient): boolean {
+  if (!patient) return false;
+  const key = paramToPatientKey[row.param];
+  const value = patient[key];
+  const score = getNEWS2Score(row.param, value, patient);
+  return row.ranges[colIdx] !== null && score === row.ranges[colIdx];
 }
 ---
 
 <style>
-  .news2-table { border-collapse: collapse; width: 100%; margin: 2em 0; }
-  .news2-table th, .news2-table td { border: 1px solid #ccc; padding: 0.5em 1em; text-align: center; }
-  .news2-table th { background: #e6eaff; }
-  .score-3 { background: #e57373 !important; color: #fff; }    /* Red */
-  .score-2 { background: #ffb74d !important; color: #000; }    /* Orange/Amber */
-  .score-1 { background: #fff176 !important; color: #000; }    /* Yellow */
-  .score-0 { background: #fff !important; color: #000; }       /* White */
-  .highlight { border: 2px solid #3245ff !important; }
+  body, .news2-main {
+    font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+    background: #f3f4f6;
+    color: #1e293b;
+    margin: 0;
+    padding: 0;
+  }
+  .news2-topnav {
+    max-width: 1000px;
+    margin: 2em auto 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+  }
+  .news2-back-link {
+    display: inline-block;
+    color: #1d4ed8;
+    font-weight: 600;
+    text-decoration: none;
+    font-size: 1.1em;
+    transition: color 0.2s;
+    margin-bottom: 0.5em;
+  }
+  .news2-back-link:hover {
+    color: #0e256e;
+    text-decoration: underline;
+  }
+  .news2-card {
+    max-width: 1000px;
+    margin: 0 auto 2em auto;
+    background: #fff;
+    padding: 2.5em 2.5em 2em 2.5em;
+    border-radius: 18px;
+    box-shadow: 0 4px 32px 0 #1e293b18;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5em;
+  }
+  .news2-header {
+    display: flex;
+    align-items: center;
+    gap: 1.5em;
+    margin-bottom: 0.5em;
+  }
+  .news2-avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #60a5fa 60%, #1d4ed8 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.2em;
+    color: #fff;
+    font-weight: 700;
+    box-shadow: 0 2px 8px #1d4ed822;
+  }
+  .news2-patient-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2em;
+  }
+  .news2-patient-info strong {
+    font-weight: 600;
+    color: #1d4ed8;
+  }
+  .news2-score-bar {
+    background: #e0e7ef;
+    border-radius: 8px;
+    height: 18px;
+    margin: 0.5em 0 0.2em 0;
+    width: 100%;
+    overflow: hidden;
+    position: relative;
+  }
+  .news2-score-bar-inner {
+    background: linear-gradient(90deg, #60a5fa 60%, #1d4ed8 100%);
+    height: 100%;
+    border-radius: 8px;
+    transition: width 0.4s cubic-bezier(.4,2,.6,1);
+  }
+  .news2-table-wrapper {
+    background: #f8fafc;
+    border-radius: 12px;
+    box-shadow: 0 1px 8px #1e293b0a;
+    overflow-x: auto;
+    margin: 2em 0 1em 0;
+    padding-bottom: 2px;
+  }
+  .news2-table {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+    min-width: 700px;
+    background: transparent;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: none;
+  }
+  .news2-table th, .news2-table td {
+    border: 1px solid #e5e7eb;
+    padding: 0.7em 1em;
+    text-align: center;
+    font-size: 1em;
+  }
+  .news2-table th {
+    background: #e6eaff;
+    font-weight: 600;
+    color: #1d4ed8;
+    letter-spacing: 0.02em;
+  }
+  .score-3 { background: #e57373 !important; color: #fff; }
+  .score-2 { background: #ffb74d !important; color: #000; }
+  .score-1 { background: #fff176 !important; color: #000; }
+  .score-0 { background: #fff !important; color: #000; }
+  .highlight {
+    border: 5px solid #1d4ed8 !important;
+    background: #60a5fa !important;
+    font-weight: bold;
+    font-size: 1.25em;
+    color: #1e293b !important;
+    box-shadow: 0 0 12px #1d4ed8aa;
+    z-index: 1;
+  }
+  .news2-section-title {
+    font-size: 1.2em;
+    font-weight: 700;
+    color: #1d4ed8;
+    margin-bottom: 0.5em;
+    margin-top: 1em;
+    letter-spacing: 0.01em;
+  }
+  .news2-patient-info-box {
+    background: #f8fafc;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 1.2em 1.5em;
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.5em 2em;
+  }
+  @media (min-width: 600px) {
+    .news2-patient-info-box {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  .news2-patient-info {
+    padding-left: 0;
+    list-style: none;
+    margin: 0;
+    display: contents;
+  }
+  .news2-patient-info li {
+    margin-bottom: 0.1em;
+    font-size: 1.08em;
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+  }
+  @media (max-width: 600px) {
+    .news2-card {
+      padding: 1.2em 0.5em 1.2em 0.5em;
+    }
+    .news2-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.7em;
+    }
+    .news2-avatar {
+      width: 48px;
+      height: 48px;
+      font-size: 1.3em;
+    }
+    .news2-table th, .news2-table td {
+      padding: 0.3em 0.2em;
+      font-size: 0.92em;
+    }
+    .news2-table {
+      min-width: 600px;
+    }
+  }
+  @media (min-width: 1200px) {
+    .news2-card {
+      padding-left: 1.5em;
+      padding-right: 1.5em;
+    }
+  }
 </style>
 
 <Layout>
   {patient ? (
-    <div style="max-width: 700px; margin: 2em auto; background: #fafafa; padding: 2em; border-radius: 12px;">
-      <h2>{patient.name} (Age: {patient.age})</h2>
-      <h3>NEWS2 Score: <span style="color: #3245ff">{score}</span></h3>
-      <div style="margin: 1em 0;">
-        <div style={`background: #3245ff; height: 100%; border-radius: 8px; width: ${(score ?? 0) * 10}%`} />
+    <>
+      <div class="news2-topnav">
+        <a href="/news2" class="news2-back-link">&larr; Back to overview</a>
       </div>
-      <small>Graphical representation (bar length = score x 10%)</small>
-      <table class="news2-table">
-        <thead>
-          <tr>
-            <th>Parameter</th>
-            <th>3</th>
-            <th>2</th>
-            <th>1</th>
-            <th>0</th>
-            <th>1</th>
-            <th>2</th>
-            <th>3</th>
-          </tr>
-        </thead>
-        <tbody>
-          {news2Chart.map(row => (
-            <tr>
-              <td>{row.label}</td>
-              {row.ranges.map(range => (
-                <td class={`score-${range.score} ${isInRange(row.value, range) ? 'highlight' : ''}`}>{range.label}</td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      <ul style="padding-left: 0; list-style: none;">
-        <li><strong>Respiratory Rate:</strong> {patient.respiratoryRate}</li>
-        <li><strong>Oxygen Saturation:</strong> {patient.oxygenSaturation}</li>
-        <li><strong>Temperature:</strong> {patient.temperature} °C</li>
-        <li><strong>Systolic BP:</strong> {patient.systolicBP}</li>
-        <li><strong>Heart Rate:</strong> {patient.heartRate}</li>
-        <li><strong>Consciousness:</strong> {patient.consciousness}</li>
-        <li><strong>Supplemental O2:</strong> {patient.supplementalO2 ? 'Yes' : 'No'}</li>
-      </ul>
-      <a href="/news2" style="display: inline-block; margin-top: 1em; color: #3245ff;">&larr; Back to overview</a>
-    </div>
+      <div class="news2-card news2-main">
+        <div class="news2-header">
+          <div class="news2-avatar">{patient.name.split(' ').map(n => n[0]).join('').toUpperCase()}</div>
+          <div>
+            <h2 style="margin: 0 0 0.2em 0; font-size: 2em; font-weight: 700; color: #1d4ed8;">{patient.name}</h2>
+            <div style="font-size: 1.1em; color: #64748b;">Age: <strong>{patient.age}</strong></div>
+          </div>
+        </div>
+        <div class="news2-section-title">NEWS2 Score</div>
+        <div style="display: flex; align-items: baseline; gap: 1em;">
+          <span style={`color: ${risk.color}; font-size: 2.2em; font-weight: 800; letter-spacing: 0.01em;`}>{score}</span>
+          <span style="font-size: 1.2em; color: #64748b; font-weight: 500;">/ {maxNews2Score}</span>
+        </div>
+        <div class="news2-score-bar" style="background: #e5e7eb;">
+          <div class="news2-score-bar-inner" style={`width: ${(score ?? 0) / maxNews2Score * 100}%; background: ${risk.color};`} />
+        </div>
+        <div style={`color: ${risk.color}; font-weight: 600; font-size: 1.1em; margin-bottom: 0.5em;`}>
+          {risk.label}
+        </div>
+        <div class="news2-section-title">NEWS2 Scoring Table</div>
+        <div class="news2-table-wrapper" style="margin-top: 0.5em;">
+          <table class="news2-table">
+            <thead>
+              <tr>
+                <th>Physiological parameter</th>
+                <th>3</th>
+                <th>2</th>
+                <th>1</th>
+                <th>0</th>
+                <th>1</th>
+                <th>2</th>
+                <th>3</th>
+              </tr>
+            </thead>
+            <tbody>
+              {news2Table.map(row => {
+                // Find the index of the cell that should be highlighted for this row
+                const key = paramToPatientKey[row.param];
+                const value = patient[key];
+                const score = getNEWS2Score(row.param, value, patient);
+                const highlightIdx = row.ranges.findIndex(r => r === score && r !== null);
+                return (
+                  <tr>
+                    <td>{row.label}</td>
+                    {row.values.map((val, idx) => (
+                      <td class={`score-${row.ranges[idx]} ${idx === highlightIdx ? 'highlight' : ''}`}>{val}</td>
+                    ))}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+        <div class="news2-section-title">Patient Details</div>
+        <div class="news2-patient-info-box">
+          <ul class="news2-patient-info">
+            <li><strong>Respiratory Rate:</strong> {patient.respiratoryRate}</li>
+            <li><strong>Oxygen Saturation:</strong> {patient.oxygenSaturation}</li>
+            <li><strong>Supplemental O2:</strong> {patient.supplementalO2 ? 'Yes' : 'No'}</li>
+            <li><strong>Systolic BP:</strong> {patient.systolicBP}</li>
+            <li><strong>Heart Rate:</strong> {patient.heartRate}</li>
+            <li><strong>Consciousness:</strong> {patient.consciousness}{patient.consciousness !== 'Alert' ? ' (scored as CVPU)' : ''}</li>
+            <li><strong>Temperature:</strong> {patient.temperature} °C</li>
+          </ul>
+        </div>
+      </div>
+    </>
   ) : (
     <div style="text-align: center; margin: 2em;">
       <h2>Patient not found</h2>

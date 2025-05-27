@@ -1,11 +1,63 @@
 ---
-import Welcome from '../components/Welcome.astro';
 import Layout from '../layouts/Layout.astro';
 
 // Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
 // Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
 ---
 
+<style>
+  .home-container {
+    max-width: 600px;
+    margin: 4em auto 0 auto;
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: 0 4px 32px 0 #1e293b18;
+    padding: 2.5em 2em 2em 2em;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5em;
+  }
+  .home-title {
+    font-size: 2.2em;
+    font-weight: 800;
+    color: #1d4ed8;
+    margin-bottom: 0.2em;
+    text-align: center;
+    letter-spacing: 0.01em;
+  }
+  .home-desc {
+    color: #64748b;
+    font-size: 1.15em;
+    text-align: center;
+    margin-bottom: 1em;
+  }
+  .home-link {
+    display: inline-block;
+    background: #1d4ed8;
+    color: #fff;
+    font-weight: 700;
+    font-size: 1.15em;
+    border-radius: 10px;
+    padding: 0.8em 2em;
+    text-decoration: none;
+    box-shadow: 0 2px 8px #1d4ed822;
+    transition: background 0.2s, color 0.2s;
+    margin-top: 1em;
+  }
+  .home-link:hover {
+    background: #3245ff;
+    color: #fff;
+  }
+</style>
+
 <Layout>
-	<Welcome />
+  <div class="home-container">
+    <div class="home-title">Welcome to the NEWS2 Dashboard</div>
+    <div class="home-desc">
+      This app helps you view and score patients using the National Early Warning Score 2 (NEWS2) system.<br /><br />
+      Click below to view all patients and their NEWS2 scores.
+    </div>
+    <a href="/news2" class="home-link">Go to NEWS2 Overview</a>
+  </div>
 </Layout>
