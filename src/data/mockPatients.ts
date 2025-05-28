@@ -17,37 +17,42 @@ export const patients: Patient[] = [
     id: '2',
     name: 'Jane Smith',
     age: 72,
-    respiratoryRate: 22,
-    oxygenSaturation: 90,
-    temperature: 38.1,
-    systolicBP: 105,
-    heartRate: 110,
-    consciousness: 'Voice',
-    supplementalO2: true,
+    respiratoryRate: 21, // 2
+    oxygenSaturation: 93, // 2
+    temperature: 38.0, // 1
+    systolicBP: 110, // 1
+    heartRate: 95, // 0
+    consciousness: 'Voice', // 3
+    supplementalO2: false, // 0
+    // Total: 2+2+1+1+0+3+0 = 9
+
   },
   {
     id: '3',
     name: 'Alice Brown',
     age: 58,
-    respiratoryRate: 16,
-    oxygenSaturation: 98,
-    temperature: 36.5,
-    systolicBP: 130,
-    heartRate: 75,
-    consciousness: 'Alert',
-    supplementalO2: false,
+    respiratoryRate: 21, // 1
+    oxygenSaturation: 94, // 1
+    temperature: 38.1, // 1
+    systolicBP: 120, // 0
+    heartRate: 85, // 0
+    consciousness: 'Alert', // 0
+    supplementalO2: false, // 0
+    // Total: 1+1+1+0+0+0+0 = 3
+
   },
   {
     id: '4',
     name: 'Michael Green',
     age: 50,
-    respiratoryRate: 20,
-    oxygenSaturation: 97,
-    temperature: 36.8,
-    systolicBP: 140,
-    heartRate: 92,
+    respiratoryRate: 21,
+    oxygenSaturation: 92,
+    temperature: 37.8,
+    systolicBP: 100,
+    heartRate: 91,
     consciousness: 'Alert',
-    supplementalO2: false,
+    supplementalO2: false, // Robert >8
+
   },
   {
     id: '5',
@@ -65,13 +70,15 @@ export const patients: Patient[] = [
     id: '6',
     name: 'Robert Black',
     age: 80,
-    respiratoryRate: 25,
-    oxygenSaturation: 88,
-    temperature: 35.8,
-    systolicBP: 90,
-    heartRate: 130,
-    consciousness: 'Pain',
-    supplementalO2: true,
+    respiratoryRate: 25, // 3
+    oxygenSaturation: 97, // 0
+    temperature: 37.0, // 0
+    systolicBP: 120, // 0
+    heartRate: 80, // 0
+    consciousness: 'Alert', // 0
+    supplementalO2: false, // 0
+    // Total: 3+0+0+0+0+0+0 = 3
+
   },
   {
     id: '7',
@@ -101,13 +108,15 @@ export const patients: Patient[] = [
     id: '9',
     name: 'Susan Clark',
     age: 68,
-    respiratoryRate: 21,
-    oxygenSaturation: 93,
-    temperature: 38.5,
-    systolicBP: 110,
-    heartRate: 100,
-    consciousness: 'Voice',
-    supplementalO2: true,
+    respiratoryRate: 21, // 1
+    oxygenSaturation: 94, // 1
+    temperature: 36.9, // 0
+    systolicBP: 120, // 0
+    heartRate: 80, // 0
+    consciousness: 'Alert', // 0
+    supplementalO2: false, // 0
+    // Total: 1+1+0+0+0+0+0 = 2
+
   },
   {
     id: '10',
@@ -125,13 +134,13 @@ export const patients: Patient[] = [
     id: '11',
     name: 'Patricia Scott',
     age: 76,
-    respiratoryRate: 24,
-    oxygenSaturation: 89,
-    temperature: 39.2,
-    systolicBP: 85,
-    heartRate: 140,
-    consciousness: 'Unresponsive',
-    supplementalO2: true,
+    respiratoryRate: 16,
+    oxygenSaturation: 97,
+    temperature: 36.4,
+    systolicBP: 120,
+    heartRate: 75,
+    consciousness: 'Alert',
+    supplementalO2: false,
   },
   {
     id: '12',
@@ -161,13 +170,13 @@ export const patients: Patient[] = [
     id: '14',
     name: 'Matthew Allen',
     age: 63,
-    respiratoryRate: 23,
-    oxygenSaturation: 91,
-    temperature: 35.5,
-    systolicBP: 98,
-    heartRate: 120,
-    consciousness: 'Pain',
-    supplementalO2: true,
+    respiratoryRate: 17,
+    oxygenSaturation: 97,
+    temperature: 36.7,
+    systolicBP: 120,
+    heartRate: 80,
+    consciousness: 'Alert',
+    supplementalO2: false,
   },
   {
     id: '15',
@@ -185,37 +194,38 @@ export const patients: Patient[] = [
     id: '16',
     name: 'Daniel Harris',
     age: 70,
-    respiratoryRate: 8,
-    oxygenSaturation: 85,
-    temperature: 34.8,
-    systolicBP: 88,
-    heartRate: 135,
-    consciousness: 'Unresponsive',
-    supplementalO2: true,
+    respiratoryRate: 16,
+    oxygenSaturation: 97,
+    temperature: 36.8,
+    systolicBP: 122,
+    heartRate: 76,
+    consciousness: 'Alert',
+    supplementalO2: false,
   },
   {
     id: '17',
     name: 'Karen Martin',
     age: 53,
-    respiratoryRate: 11,
+    respiratoryRate: 21,
     oxygenSaturation: 93,
-    temperature: 36.0,
-    systolicBP: 105,
+    temperature: 38.0,
+    systolicBP: 110,
     heartRate: 95,
     consciousness: 'Voice',
-    supplementalO2: false,
+    supplementalO2: false, // Jane >8
+
   },
   {
     id: '18',
     name: 'Paul Walker',
     age: 66,
-    respiratoryRate: 26,
-    oxygenSaturation: 90,
-    temperature: 39.5,
-    systolicBP: 220,
-    heartRate: 145,
-    consciousness: 'Pain',
-    supplementalO2: true,
+    respiratoryRate: 16,
+    oxygenSaturation: 98,
+    temperature: 37.0,
+    systolicBP: 120,
+    heartRate: 80,
+    consciousness: 'Alert',
+    supplementalO2: false,
   },
   {
     id: '19',
@@ -281,11 +291,11 @@ export const patients: Patient[] = [
     id: '24',
     name: 'Andrew Foster',
     age: 52,
-    respiratoryRate: 21,
-    oxygenSaturation: 94,
+    respiratoryRate: 18,
+    oxygenSaturation: 97,
     temperature: 36.8,
-    systolicBP: 95,
-    heartRate: 92,
+    systolicBP: 120,
+    heartRate: 80,
     consciousness: 'Alert',
     supplementalO2: false,
   },
@@ -293,12 +303,12 @@ export const patients: Patient[] = [
     id: '25',
     name: 'Diana Martinez',
     age: 63,
-    respiratoryRate: 19,
-    oxygenSaturation: 95,
-    temperature: 37.5,
-    systolicBP: 108,
-    heartRate: 115,
-    consciousness: 'Voice',
+    respiratoryRate: 16,
+    oxygenSaturation: 98,
+    temperature: 37.0,
+    systolicBP: 122,
+    heartRate: 76,
+    consciousness: 'Alert',
     supplementalO2: false,
   },
 ];
