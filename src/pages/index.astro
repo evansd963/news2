@@ -222,16 +222,35 @@ const filterOptions = ['All', 'Critical', 'High', 'Medium', 'Alerts Only'];
 
   @media (max-width: 700px) {
     .overview-container { 
-      padding: 1.2em 0.2em; 
+      padding: 1em 0.5em; /* Adjusted padding */
+    }
+    .overview-title {
+      font-size: 1.8rem; /* Reduced font size */
+      margin-bottom: 0.8em;
+    }
+    .filter-title-text {
+      font-size: 0.85rem; /* Reduced font size */
+    }
+    .filter-bar {
+      flex-wrap: wrap;
+      gap: 0.5em 0.75em; /* row-gap column-gap */
+      justify-content: center;
+      margin-bottom: 1.2em;
+    }
+    .filter-btn {
+      font-size: 0.8rem; /* Reduced font size */
+      padding: 0.5em 1em; /* Reduced padding */
+      /* margin-bottom is handled by filter-bar gap */
     }
     .patient-table {
       display: block;
       overflow-x: auto;
       white-space: nowrap;
+      font-size: 0.85rem; /* Reduced font size for table content */
     }
     .patient-table th,
     .patient-table td {
-      padding: 0.8em;
+      padding: 0.5em 0.6em; /* Reduced padding in cells */
     }
   }
 </style>
