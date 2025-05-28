@@ -11,5 +11,8 @@ export default defineConfig({
     }
   },
   output: 'server',
-  adapter: vercel(),
+  adapter: vercel({}),
+  server: {
+    port: 4322
+  }
 });

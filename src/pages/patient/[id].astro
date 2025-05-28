@@ -2,7 +2,7 @@
 import Layout from '../../layouts/Layout.astro';
 import type { Patient } from '../../types/PatientDTO';
 import { fetchPatientById } from '../../data/mockPatients';
-import { getNEWS2Score, calculateNEWS2Total, getNews2Risk } from '../../utils/news2Calculator';
+import { calculateNEWS2Total, getNews2Risk } from '../../utils/news2Calculator';
 
 const { id } = Astro.params;
 if (!id) {
@@ -77,41 +77,6 @@ const paramToPatientKey: Record<string, keyof Patient> = {
   'Consciousness': 'consciousness',
   'Temperature': 'temperature',
 };
-
-function isValueInRange(value: number, rangeStr: string): boolean {
-  if (!rangeStr) return false;
-  
-  // Handle special case for temperature ranges with decimal points
-  if (rangeStr.includes('.')) {
-    if (rangeStr.includes('≤')) {
-      const limit = parseFloat(rangeStr.replace('≤', ''));
-      return value <= limit;
-    }
-    if (rangeStr.includes('≥')) {
-      const limit = parseFloat(rangeStr.replace('≥', ''));
-      return value >= limit;
-    }
-    if (rangeStr.includes('–')) {
-      const [min, max] = rangeStr.split('–').map(s => parseFloat(s));
-      return value >= min && value <= max;
-    }
-  }
-  
-  // Handle other ranges
-  if (rangeStr.includes('≤')) {
-    const limit = parseInt(rangeStr.replace('≤', ''));
-    return value <= limit;
-  }
-  if (rangeStr.includes('≥')) {
-    const limit = parseInt(rangeStr.replace('≥', ''));
-    return value >= limit;
-  }
-  if (rangeStr.includes('–')) {
-    const [min, max] = rangeStr.split('–').map(s => parseInt(s));
-    return value >= min && value <= max;
-  }
-  return false;
-}
 
 function isCellHighlighted(row: any, colIdx: number, patient: Patient): boolean {
   if (!patient) return false;
