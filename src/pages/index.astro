@@ -6,7 +6,7 @@ import { calculateNEWS2Total, getNews2Risk, getNEWS2Score } from '../utils/news2
 
 const patients = await fetchAllPatients();
 
-const filterOptions = ['All', 'Critical', 'High', 'Medium'];
+const filterOptions = ['All', 'Critical', 'High', 'Medium', 'Alerts Only'];
 ---
 
 <style>
@@ -141,6 +141,22 @@ const filterOptions = ['All', 'Critical', 'High', 'Medium'];
     filter: drop-shadow(0 0 2px #fff176);
   }
 
+.alert-filter-btn {
+  background: #fff1f2;
+  color: #b91c1c;
+  border: 2px solid #ef4444;
+  border-radius: 2em;
+  font-weight: 700;
+  margin-right: 0.7em;
+  box-shadow: 0 1px 4px 0 rgba(239,68,68,0.10);
+  transition: background 0.2s, color 0.2s, border 0.2s;
+}
+.alert-filter-btn.active, .alert-filter-btn:hover {
+  background: #ef4444;
+  color: #fff;
+  border-color: #b91c1c;
+}
+
 .filter-bar {
     display: flex;
     gap: 1em;
@@ -192,13 +208,16 @@ const filterOptions = ['All', 'Critical', 'High', 'Medium'];
       </span>
     </div>
     <div class="filter-bar" id="filter-bar">
-      {filterOptions.map(option => (
+      <button type="button" class="filter-btn alert-filter-btn" data-filter="Alerts Only"><span>🚨 Alerts Only</span></button>
+      <span style="display:inline-block; width: 2.5em;"></span>
+      {filterOptions.filter(option => option !== 'Alerts Only').map(option => (
         <button type="button" class="filter-btn" data-filter={option}>{option}</button>
       ))}
     </div>
     <table class="patient-table" id="patient-list">
       <thead>
         <tr>
+          <th style="text-align:center;">Alert</th>
           <th>Patient</th>
           <th>Age</th>
           <th style="text-align:center;">Resp</th>
@@ -228,13 +247,13 @@ const filterOptions = ['All', 'Critical', 'High', 'Medium'];
           else if (risk.label === 'Critical risk') riskClass = 'critical';
           return (
             <tr data-risk={risk.label.split(' ')[0]} onclick={`window.location.href='/patient/${patient.id}'`}>
+              <td style="text-align:center;">
+                {(score > 5 || [respScore, spo2Score, o2Score, bpScore, pulseScore, conscScore, tempScore].some(s => s === 3)) ? (
+                  <span class="alert-flash" title="Alert: High NEWS2 score">🚨</span>
+                ) : ''}
+              </td>
               <td>
-                <div class="patient-name">
-                  {patient.name}
-                  {(score > 5 || [respScore, spo2Score, o2Score, bpScore, pulseScore, conscScore, tempScore].some(s => s === 3)) ? (
-                    <span class="alert-flash" title="Alert: High NEWS2 score" style="margin-left:0.35em;">🚨</span>
-                  ) : ''}
-                </div>
+                <div class="patient-name">{patient.name}</div>
               </td>
               <td>
                 <div class="patient-age">{patient.age}</div>
@@ -265,7 +284,13 @@ const filterOptions = ['All', 'Critical', 'High', 'Medium'];
           e.target.classList.add('active');
           // Show/hide patients
           patientList.querySelectorAll('tbody tr').forEach(row => {
-            if (selected === 'All' || row.getAttribute('data-risk') === selected) {
+            if (selected === 'All') {
+              row.style.display = '';
+            } else if (selected === 'Alerts Only') {
+              // Show only rows with an alert icon in the first cell
+              const alertCell = row.querySelector('td:first-child .alert-flash');
+              row.style.display = alertCell ? '' : 'none';
+            } else if (row.getAttribute('data-risk') === selected) {
               row.style.display = '';
             } else {
               row.style.display = 'none';
