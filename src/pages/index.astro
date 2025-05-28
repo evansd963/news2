@@ -2,62 +2,9 @@
 import Layout from '../layouts/Layout.astro';
 import type { Patient } from '../types/PatientDTO';
 import { fetchAllPatients } from '../data/mockPatients';
+import { calculateNEWS2Total, getNews2Risk } from '../utils/news2Calculator';
 
 const patients = await fetchAllPatients();
-
-function calculateNEWS2(patient: Patient): number {
-  let score = 0;
-  
-  // Respiration rate
-  if (patient.respiratoryRate <= 8) score += 3;
-  else if (patient.respiratoryRate <= 11) score += 1;
-  else if (patient.respiratoryRate <= 20) score += 0;
-  else if (patient.respiratoryRate <= 24) score += 2;
-  else score += 3;
-
-  // SpO2 Scale 1
-  if (patient.oxygenSaturation <= 91) score += 3;
-  else if (patient.oxygenSaturation <= 93) score += 2;
-  else if (patient.oxygenSaturation <= 95) score += 1;
-  else score += 0;
-
-  // Air or oxygen
-  if (patient.supplementalO2) score += 2;
-
-  // Systolic BP
-  if (patient.systolicBP <= 90) score += 3;
-  else if (patient.systolicBP <= 100) score += 2;
-  else if (patient.systolicBP <= 110) score += 1;
-  else if (patient.systolicBP <= 219) score += 0;
-  else score += 3;
-
-  // Pulse
-  if (patient.heartRate <= 40) score += 3;
-  else if (patient.heartRate <= 50) score += 1;
-  else if (patient.heartRate <= 90) score += 0;
-  else if (patient.heartRate <= 110) score += 1;
-  else if (patient.heartRate <= 130) score += 2;
-  else score += 3;
-
-  // Consciousness
-  if (patient.consciousness !== 'Alert') score += 3;
-
-  // Temperature
-  if (patient.temperature <= 35.0) score += 3;
-  else if (patient.temperature <= 36.0) score += 1;
-  else if (patient.temperature <= 38.0) score += 0;
-  else if (patient.temperature <= 39.0) score += 1;
-  else score += 2;
-
-  return score;
-}
-
-function getNews2Risk(score: number) {
-  if (score <= 4) return { label: 'Low', color: '#22c55e' };
-  if (score <= 6) return { label: 'Medium', color: '#eab308' };
-  if (score <= 8) return { label: 'High', color: '#f97316' };
-  return { label: 'Critical', color: '#ef4444' };
-}
 
 const filterOptions = ['All', 'Critical', 'Medium'];
 ---
@@ -187,7 +134,7 @@ const filterOptions = ['All', 'Critical', 'Medium'];
       </thead>
       <tbody>
         {patients.map((patient: Patient) => {
-          const score = calculateNEWS2(patient);
+          const score = calculateNEWS2Total(patient);
           const risk = getNews2Risk(score);
           let riskClass = 'low';
           if (risk.label === 'Medium') riskClass = 'medium';
