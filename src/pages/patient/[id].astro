@@ -332,7 +332,8 @@ function isCellHighlighted(row: any, colIdx: number, patient: Patient): boolean 
       display: flex;
       justify-content: space-between;
       align-items: baseline; /* Align baselines of first lines */
-      margin-bottom: -0.4em; /* Reduced space before progress bar */
+      margin-bottom: -0.7em; /* Reduced space before progress bar */
+      margin-top: -1.2em; /* Pull up towards back link */
     }
     .patient-summary-header-mobile .news2-header {
       flex-direction: column;
@@ -475,7 +476,7 @@ function isCellHighlighted(row: any, colIdx: number, patient: Patient): boolean 
   {patient ? (
     <>
       <div class="news2-card news2-main">
-        <a href="/" class="news2-back-link" style="margin-bottom: 0.5em; display: inline-block;">&larr; Back to overview</a>
+        <a href="/" class="news2-back-link">&larr; Back</a>
         <div class="patient-summary-header-mobile">
           <div class="news2-header">
             <div class="news2-avatar">{patient.name.split(' ').map(n => n[0]).join('').toUpperCase()}</div>
