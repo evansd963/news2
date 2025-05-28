@@ -311,6 +311,164 @@ function isCellHighlighted(row: any, colIdx: number, patient: Patient): boolean 
       padding-right: 1.5em;
     }
   }
+
+  @media (max-width: 700px) {
+    .news2-topnav {
+      margin-top: 0.5em;
+      margin-bottom: 0.25em;
+      padding-left: 1em;
+      padding-right: 1em;
+    }
+    .news2-card {
+      margin-left: 0.5em;
+      margin-right: 0.5em;
+      padding: 1.5em 1em;
+      border-radius: 12px;
+    }
+    .news2-back-link {
+      margin-bottom: 0em !important;
+    }
+    .patient-summary-header-mobile {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline; /* Align baselines of first lines */
+      margin-bottom: -0.4em; /* Reduced space before progress bar */
+    }
+    .patient-summary-header-mobile .news2-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.2em; /* Tighter gap for name/age */
+      margin-bottom: 0; /* Margin controlled by parent */
+    }
+    .patient-summary-header-mobile .patient-name {
+      font-size: 1em;
+      font-weight: 700;
+      color: #1d4ed8;
+      margin: 0 0 0.05em 0;
+    }
+    .patient-summary-header-mobile .patient-age {
+      font-size: 0.8em;
+      color: #64748b;
+    }
+    .patient-score-risk-block {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 0.2em;
+    }
+    .patient-score-risk-block .news2-score-line {
+      margin-top: 0;
+      margin-bottom: 0;
+      gap: 0.3em;
+      justify-content: flex-end; /* Align score to the right */
+    }
+    .patient-score-risk-block .score-value-actual {
+      font-size: 1.5em;
+    }
+    .patient-score-risk-block .score-max-value {
+      font-size: 0.9em;
+    }
+    .risk-label-mobile {
+      font-weight: 600;
+      font-size: 0.8em; /* Corrected typo and matched patient-age */
+      text-align: right;
+    }
+    .news2-avatar {
+      width: 56px;
+      height: 56px;
+      font-size: 1.8em;
+      display: none; /* Hide on mobile */
+    }
+    .news2-score-display {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.5em;
+    }
+    .news2-score-text {
+       font-size: 1.1em;
+    }
+    .news2-score-value {
+      font-size: 1.8em;
+      padding: 0.2em 0.5em;
+    }
+
+    /* Table specific adjustments */
+    .news2-chart-table-container { /* Add a wrapper if not present for scrolling */
+      overflow-x: auto;
+      margin-left: -1em; /* Counteract card padding to use full width */
+      margin-right: -1em;
+      padding-left: 1em;
+      padding-right: 1em;
+    }
+    .news2-chart-table-container .news2-table {
+      width: 100%;
+      min-width: 600px;
+      font-size: 0.8rem;
+    }
+    .news2-chart-table-container .news2-table th,
+    .news2-chart-table-container .news2-table td {
+      padding: 0.4em 0.3em;
+      white-space: nowrap;
+    }
+    .news2-chart-table-container .news2-table th:first-child,
+    .news2-chart-table-container .news2-table td:first-child {
+      white-space: normal;
+      min-width: 120px;
+    }
+    .news2-score-line {
+      display: flex;
+      align-items: baseline;
+      gap: 0.4em; /* Adjusted gap */
+      margin-top: 0.25em; /* Space from header */
+      margin-bottom: 0.4em; /* Space to progress bar */
+    }
+    .news2-score-line .score-value-actual {
+      font-size: 2em; /* Adjusted from 2.2em inline */
+      font-weight: 800;
+      letter-spacing: 0.01em;
+    }
+    .news2-score-line .score-max-value {
+      font-size: 1em; /* Adjusted from 1.2em inline */
+      color: #64748b;
+      font-weight: 500;
+    }
+    .news2-score-bar {
+      margin-top: 0; /* Adjusted from default */
+      margin-bottom: 0.3em; /* Reduced space before next section title */
+    }
+
+    .news2-chart-table-container {
+      margin-bottom: 0.5em; /* Reduce space after table */
+    }
+
+    .news2-section-title {
+      font-size: 1em;
+      margin-top: 0em; /* Further reduced */
+      margin-bottom: -0.5em; /* Further reduced */
+    }
+
+    .news2-patient-info-box {
+      padding: 0.8em 1em;
+      margin-bottom: 1em;
+      margin-top: 0; /* Ensure no top margin */
+    }
+
+    .news2-patient-info {
+      grid-template-columns: 1fr; /* Force single column */
+      gap: 0.5em;
+    }
+
+    .news2-patient-info li {
+      font-size: 0.9em;
+    }
+
+    /* .news2-patient-info li strong {} - No changes needed here for now */
+
+    .news2-chart-table-container .news2-table .score-cell {
+      min-width: 40px;
+      text-align: center;
+    }
+  }
 </style>
 
 <Layout>
@@ -318,26 +476,27 @@ function isCellHighlighted(row: any, colIdx: number, patient: Patient): boolean 
     <>
       <div class="news2-card news2-main">
         <a href="/" class="news2-back-link" style="margin-bottom: 0.5em; display: inline-block;">&larr; Back to overview</a>
-        <div class="news2-header">
-          <div class="news2-avatar">{patient.name.split(' ').map(n => n[0]).join('').toUpperCase()}</div>
-          <div>
-            <h2 style="margin: 0 0 0.2em 0; font-size: 2em; font-weight: 700; color: #1d4ed8;">{patient.name}</h2>
-            <div style="font-size: 1.1em; color: #64748b;">Age: <strong>{patient.age}</strong></div>
+        <div class="patient-summary-header-mobile">
+          <div class="news2-header">
+            <div class="news2-avatar">{patient.name.split(' ').map(n => n[0]).join('').toUpperCase()}</div>
+            <div>
+              <h2 class="patient-name">{patient.name}</h2>
+              <div class="patient-age">Age: <strong>{patient.age}</strong></div>
+            </div>
           </div>
-        </div>
-        <div class="news2-section-title">NEWS2 Score</div>
-        <div style="display: flex; align-items: baseline; gap: 1em;">
-          <span style={`color: ${risk.color}; font-size: 2.2em; font-weight: 800; letter-spacing: 0.01em;`}>{score}</span>
-          <span style="font-size: 1.2em; color: #64748b; font-weight: 500;">/ {maxNews2Score}</span>
+          <div class="patient-score-risk-block">
+            <div class="news2-score-line">
+              <span class="score-value-actual" style={`color: ${risk.color};`}>{score}</span>
+              <span class="score-max-value">/ {maxNews2Score}</span>
+            </div>
+            <div class="risk-label-mobile" style={`color: ${risk.color};`}>{risk.label}</div>
+          </div>
         </div>
         <div class="news2-score-bar" style="background: #e5e7eb;">
           <div class="news2-score-bar-inner" style={`width: ${(score ?? 0) / maxNews2Score * 100}%; background: ${risk.color};`} />
         </div>
-        <div style={`color: ${risk.color}; font-weight: 600; font-size: 1.1em; margin-bottom: 0.5em;`}>
-          {risk.label}
-        </div>
         <div class="news2-section-title">NEWS2 Scoring Table</div>
-        <div class="news2-table-wrapper" style="margin-top: 0.5em;">
+        <div class="news2-chart-table-container">
           <table class="news2-table">
             <thead>
               <tr>
