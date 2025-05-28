@@ -5,12 +5,12 @@
 		<meta name="viewport" content="width=device-width" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<meta name="generator" content={Astro.generator} />
-		<title>Patient Overview</title>
+		<title>NEWS2 Score</title>
 	</head>
 	<body>
 		<header class="main-header">
 			<div class="header-inner">
-				<a href="/" class="logo">NEWS2<span class="logo-dot">.</span></a>
+				<a href="/" class="logo">NEWS2<span class="logo-suffix"> Score</span></a>
 			</div>
 		</header>
 		<slot />
@@ -42,8 +42,9 @@
 		text-decoration: none;
 		letter-spacing: 0.01em;
 	}
-	.logo-dot {
+	.logo-suffix {
 		color: #60a5fa;
+		font-weight: 700;
 	}
 	.main-nav {
 		display: flex;
