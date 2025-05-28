@@ -2,7 +2,7 @@
 import Layout from '../layouts/Layout.astro';
 import type { Patient } from '../types/PatientDTO';
 import { fetchAllPatients } from '../data/mockPatients';
-import { calculateNEWS2Total, getNews2Risk } from '../utils/news2Calculator';
+import { calculateNEWS2Total, getNews2Risk, getNEWS2Score } from '../utils/news2Calculator';
 
 const patients = await fetchAllPatients();
 
@@ -74,7 +74,74 @@ const filterOptions = ['All', 'Critical', 'High', 'Medium'];
   .news2-score-badge.medium { background: #eab308; color: #1e293b; }
   .news2-score-badge.high { background: #f97316; }
   .news2-score-badge.critical { background: #ef4444; }
-  .filter-bar {
+
+  .individual-score-badge {
+    display: inline-block;
+    min-width: 22px;
+    padding: 0.18em 0.52em;
+    border-radius: 4px;
+    font-weight: 700;
+    font-size: 1em;
+    line-height: 1.5;
+    text-align: center;
+    background: none;
+    border: none;
+    box-shadow: none;
+    transition: background 0.2s, color 0.2s;
+}
+.individual-score-badge.score-0 {
+    background-color: #22c55e !important;
+    color: #fff !important;
+}
+.individual-score-badge.score-1 {
+    background-color: #fde68a !important;
+    color: #92400e !important;
+    border-color: #fde68a;
+}
+.individual-score-badge.score-2 {
+    background-color: #fdba74 !important;
+    color: #fff !important;
+    border-color: #fdba74;
+}
+.individual-score-badge.score-3 {
+    background-color: #ef4444 !important;
+    color: #fff !important;
+    border-color: #ef4444;
+}
+
+.news2-score-badge.low {
+    background: #22c55e;
+    color: #fff;
+}
+.news2-score-badge.medium {
+    background: #fde68a;
+    color: #92400e;
+}
+.news2-score-badge.high {
+    background: #fdba74;
+    color: #fff;
+}
+.news2-score-badge.critical {
+    background: #ef4444;
+    color: #fff;
+}
+
+
+    @keyframes flash-alert {
+    0%, 100% { opacity: 1; filter: drop-shadow(0 0 0 #ef4444); }
+    40% { opacity: 0.3; filter: drop-shadow(0 0 8px #fff176); }
+    60% { opacity: 1; filter: drop-shadow(0 0 12px #ef4444); }
+  }
+  .alert-flash {
+    font-size: 1.55em;
+    color: #ef4444;
+    animation: flash-alert 1s infinite;
+    font-weight: bold;
+    vertical-align: middle;
+    filter: drop-shadow(0 0 2px #fff176);
+  }
+
+.filter-bar {
     display: flex;
     gap: 1em;
     justify-content: center;
@@ -119,6 +186,11 @@ const filterOptions = ['All', 'Critical', 'High', 'Medium'];
 <Layout>
   <div class="overview-container">
     <div class="overview-title">NEWS2 Patient Overview</div>
+    <div style="text-align:center; margin-bottom: 0.2em;">
+      <span style="font-size: 1em; color: #64748b; font-weight: 600; letter-spacing: 0.01em;">
+        Filter by <span style="color: #1d4ed8;">Total NEWS2 Score</span>:
+      </span>
+    </div>
     <div class="filter-bar" id="filter-bar">
       {filterOptions.map(option => (
         <button type="button" class="filter-btn" data-filter={option}>{option}</button>
@@ -129,11 +201,25 @@ const filterOptions = ['All', 'Critical', 'High', 'Medium'];
         <tr>
           <th>Patient</th>
           <th>Age</th>
-          <th>NEWS2 Score</th>
+          <th style="text-align:center;">Resp</th>
+          <th style="text-align:center;">SpO₂</th>
+          <th style="text-align:center;">O₂</th>
+          <th style="text-align:center;">BP</th>
+          <th style="text-align:center;">Pulse</th>
+          <th style="text-align:center;">Consc</th>
+          <th style="text-align:center;">Temp</th>
+          <th style="text-align:center; border-left: 1.5px solid #e5e7eb;">Total</th>
         </tr>
       </thead>
       <tbody>
         {patients.map((patient: Patient) => {
+          const respScore = getNEWS2Score('Respiration rate', patient.respiratoryRate, patient);
+          const spo2Score = getNEWS2Score('SpO2 Scale 1', patient.oxygenSaturation, patient);
+          const o2Score = getNEWS2Score('Air or oxygen', patient.supplementalO2, patient);
+          const bpScore = getNEWS2Score('Systolic BP', patient.systolicBP, patient);
+          const pulseScore = getNEWS2Score('Pulse', patient.heartRate, patient);
+          const conscScore = getNEWS2Score('Consciousness', patient.consciousness, patient);
+          const tempScore = getNEWS2Score('Temperature', patient.temperature, patient);
           const score = calculateNEWS2Total(patient);
           const risk = getNews2Risk(score);
           let riskClass = 'low';
@@ -143,14 +229,24 @@ const filterOptions = ['All', 'Critical', 'High', 'Medium'];
           return (
             <tr data-risk={risk.label.split(' ')[0]} onclick={`window.location.href='/patient/${patient.id}'`}>
               <td>
-                <div class="patient-name">{patient.name}</div>
+                <div class="patient-name">
+                  {patient.name}
+                  {(score > 5 || [respScore, spo2Score, o2Score, bpScore, pulseScore, conscScore, tempScore].some(s => s === 3)) ? (
+                    <span class="alert-flash" title="Alert: High NEWS2 score" style="margin-left:0.35em;">🚨</span>
+                  ) : ''}
+                </div>
               </td>
               <td>
                 <div class="patient-age">{patient.age}</div>
               </td>
-              <td>
-                <span class={`news2-score-badge ${riskClass}`}>{score}</span>
-              </td>
+              <td style="text-align:center;"><span class={`individual-score-badge score-${respScore}`}>{respScore}</span></td>
+              <td style="text-align:center;"><span class={`individual-score-badge score-${spo2Score}`}>{spo2Score}</span></td>
+              <td style="text-align:center;"><span class={`individual-score-badge score-${o2Score}`}>{o2Score}</span></td>
+              <td style="text-align:center;"><span class={`individual-score-badge score-${bpScore}`}>{bpScore}</span></td>
+              <td style="text-align:center;"><span class={`individual-score-badge score-${pulseScore}`}>{pulseScore}</span></td>
+              <td style="text-align:center;"><span class={`individual-score-badge score-${conscScore}`}>{conscScore}</span></td>
+              <td style="text-align:center;"><span class={`individual-score-badge score-${tempScore}`}>{tempScore}</span></td>
+              <td style="text-align:center; border-left: 1.5px solid #e5e7eb;"><span class={`news2-score-badge ${riskClass}`}>{score}</span></td>
             </tr>
           );
         })}
