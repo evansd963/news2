@@ -6,7 +6,7 @@ import { calculateNEWS2Total, getNews2Risk } from '../utils/news2Calculator';
 
 const patients = await fetchAllPatients();
 
-const filterOptions = ['All', 'Critical', 'Medium'];
+const filterOptions = ['All', 'Critical', 'High', 'Medium'];
 ---
 
 <style>
@@ -137,11 +137,11 @@ const filterOptions = ['All', 'Critical', 'Medium'];
           const score = calculateNEWS2Total(patient);
           const risk = getNews2Risk(score);
           let riskClass = 'low';
-          if (risk.label === 'Medium') riskClass = 'medium';
-          else if (risk.label === 'High') riskClass = 'high';
-          else if (risk.label === 'Critical') riskClass = 'critical';
+          if (risk.label === 'Medium risk') riskClass = 'medium';
+          else if (risk.label === 'High risk') riskClass = 'high';
+          else if (risk.label === 'Critical risk') riskClass = 'critical';
           return (
-            <tr data-risk={risk.label} onclick={`window.location.href='/patient/${patient.id}'`}>
+            <tr data-risk={risk.label.split(' ')[0]} onclick={`window.location.href='/patient/${patient.id}'`}>
               <td>
                 <div class="patient-name">{patient.name}</div>
               </td>
