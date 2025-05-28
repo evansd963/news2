@@ -38,8 +38,8 @@ const news2Table = [
   {
     label: 'Air or oxygen?',
     param: 'Air or oxygen',
-    values: ['Oxygen', '', '', 'Air', '', '', ''],
-    ranges: [2, null, null, 0, null, null, null],
+    values: ['', 'Oxygen', '', 'Air', '', '', ''],
+    ranges: [null, 2, null, 0, null, null, null],
   },
   {
     label: 'Systolic blood pressure (mmHg)',
@@ -78,12 +78,79 @@ const paramToPatientKey: Record<string, keyof Patient> = {
   'Temperature': 'temperature',
 };
 
+function isValueInRange(value: number, rangeStr: string): boolean {
+  if (!rangeStr) return false;
+  
+  // Handle special case for temperature ranges with decimal points
+  if (rangeStr.includes('.')) {
+    if (rangeStr.includes('≤')) {
+      const limit = parseFloat(rangeStr.replace('≤', ''));
+      return value <= limit;
+    }
+    if (rangeStr.includes('≥')) {
+      const limit = parseFloat(rangeStr.replace('≥', ''));
+      return value >= limit;
+    }
+    if (rangeStr.includes('–')) {
+      const [min, max] = rangeStr.split('–').map(s => parseFloat(s));
+      return value >= min && value <= max;
+    }
+  }
+  
+  // Handle other ranges
+  if (rangeStr.includes('≤')) {
+    const limit = parseInt(rangeStr.replace('≤', ''));
+    return value <= limit;
+  }
+  if (rangeStr.includes('≥')) {
+    const limit = parseInt(rangeStr.replace('≥', ''));
+    return value >= limit;
+  }
+  if (rangeStr.includes('–')) {
+    const [min, max] = rangeStr.split('–').map(s => parseInt(s));
+    return value >= min && value <= max;
+  }
+  return false;
+}
+
 function isCellHighlighted(row: any, colIdx: number, patient: Patient): boolean {
   if (!patient) return false;
   const key = paramToPatientKey[row.param];
   const value = patient[key];
-  const score = getNEWS2Score(row.param, value, patient);
-  return row.ranges[colIdx] !== null && score === row.ranges[colIdx];
+
+  // Special case for consciousness and supplemental O2
+  if (row.param === 'Consciousness') {
+    return row.values[colIdx] === value || (row.values[colIdx] === 'CVPU' && value !== 'Alert');
+  }
+  if (row.param === 'Air or oxygen') {
+    return (row.values[colIdx] === 'Oxygen' && value === true) || 
+           (row.values[colIdx] === 'Air' && value === false);
+  }
+
+  // For numeric values
+  if (typeof value === 'number' && row.values[colIdx]) {
+    const rangeStr = row.values[colIdx];
+    
+    // Parse the range string
+    let min: number | null = null;
+    let max: number | null = null;
+    
+    if (rangeStr.includes('≤')) {
+      max = parseFloat(rangeStr.replace('≤', ''));
+      min = -Infinity;
+    } else if (rangeStr.includes('≥')) {
+      min = parseFloat(rangeStr.replace('≥', ''));
+      max = Infinity;
+    } else if (rangeStr.includes('–')) {
+      [min, max] = rangeStr.split('–').map((s: string) => parseFloat(s));
+    }
+
+    // Check if value falls within range
+    if (min !== null && max !== null) {
+      return value >= min && value <= max;
+    }
+  }
+  return false;
 }
 ---
 
@@ -321,16 +388,11 @@ function isCellHighlighted(row: any, colIdx: number, patient: Patient): boolean 
             </thead>
             <tbody>
               {news2Table.map(row => {
-                // Find the index of the cell that should be highlighted for this row
-                const key = paramToPatientKey[row.param];
-                const value = patient[key];
-                const score = getNEWS2Score(row.param, value, patient);
-                const highlightIdx = row.ranges.findIndex(r => r === score && r !== null);
                 return (
                   <tr>
                     <td>{row.label}</td>
                     {row.values.map((val, idx) => (
-                      <td class={`score-${row.ranges[idx]} ${idx === highlightIdx ? 'highlight' : ''}`}>{val}</td>
+                      <td class={`score-${row.ranges[idx]} ${isCellHighlighted(row, idx, patient) ? 'highlight' : ''}`}>{val}</td>
                     ))}
                   </tr>
                 );
