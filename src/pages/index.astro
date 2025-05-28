@@ -182,7 +182,6 @@ const filterOptions = ['All', 'Critical', 'Medium'];
         <tr>
           <th>Patient</th>
           <th>Age</th>
-          <th>Risk Level</th>
           <th>NEWS2 Score</th>
         </tr>
       </thead>
@@ -202,7 +201,6 @@ const filterOptions = ['All', 'Critical', 'Medium'];
               <td>
                 <div class="patient-age">{patient.age}</div>
               </td>
-              <td>{risk.label}</td>
               <td>
                 <span class={`news2-score-badge ${riskClass}`}>{score}</span>
               </td>
