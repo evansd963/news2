@@ -262,6 +262,7 @@ const filterOptions = ['All', 'Critical', 'High', 'Medium', 'Alerts Only'];
           <th style="text-align:center;">Alert</th>
           <th>Name</th>
           <th>Age</th>
+          <th style="text-align:center; border-right: 1.5px solid #e5e7eb;">Total</th>
           <th style="text-align:center;">Resp</th>
           <th style="text-align:center;">SpO₂</th>
           <th style="text-align:center;">O₂</th>
@@ -269,7 +270,6 @@ const filterOptions = ['All', 'Critical', 'High', 'Medium', 'Alerts Only'];
           <th style="text-align:center;">Pulse</th>
           <th style="text-align:center;">Consc</th>
           <th style="text-align:center;">Temp</th>
-          <th style="text-align:center; border-left: 1.5px solid #e5e7eb;">Total</th>
         </tr>
       </thead>
       <tbody>
@@ -300,6 +300,7 @@ const filterOptions = ['All', 'Critical', 'High', 'Medium', 'Alerts Only'];
               <td>
                 <div class="patient-age">{patient.age}</div>
               </td>
+              <td style="text-align:center; border-right: 1.5px solid #e5e7eb;"><span class={`news2-score-badge ${riskClass}`}>{score}</span></td>
               <td style="text-align:center;"><span class={`individual-score-badge score-${respScore}`}>{respScore}</span></td>
               <td style="text-align:center;"><span class={`individual-score-badge score-${spo2Score}`}>{spo2Score}</span></td>
               <td style="text-align:center;"><span class={`individual-score-badge score-${o2Score}`}>{o2Score}</span></td>
@@ -307,7 +308,6 @@ const filterOptions = ['All', 'Critical', 'High', 'Medium', 'Alerts Only'];
               <td style="text-align:center;"><span class={`individual-score-badge score-${pulseScore}`}>{pulseScore}</span></td>
               <td style="text-align:center;"><span class={`individual-score-badge score-${conscScore}`}>{conscScore}</span></td>
               <td style="text-align:center;"><span class={`individual-score-badge score-${tempScore}`}>{tempScore}</span></td>
-              <td style="text-align:center; border-left: 1.5px solid #e5e7eb;"><span class={`news2-score-badge ${riskClass}`}>{score}</span></td>
             </tr>
           );
         })}
