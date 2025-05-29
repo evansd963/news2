@@ -301,13 +301,13 @@ const filterOptions = ['All', 'Critical', 'High', 'Medium', 'Alerts Only'];
                 <div class="patient-age">{patient.age}</div>
               </td>
               <td style="text-align:center; border-right: 1.5px solid #e5e7eb;"><span class={`news2-score-badge ${riskClass}`}>{score}</span></td>
-              <td style="text-align:center;"><span class={`individual-score-badge score-${respScore}`}>{respScore}</span></td>
-              <td style="text-align:center;"><span class={`individual-score-badge score-${spo2Score}`}>{spo2Score}</span></td>
-              <td style="text-align:center;"><span class={`individual-score-badge score-${o2Score}`}>{o2Score}</span></td>
-              <td style="text-align:center;"><span class={`individual-score-badge score-${bpScore}`}>{bpScore}</span></td>
-              <td style="text-align:center;"><span class={`individual-score-badge score-${pulseScore}`}>{pulseScore}</span></td>
-              <td style="text-align:center;"><span class={`individual-score-badge score-${conscScore}`}>{conscScore}</span></td>
-              <td style="text-align:center;"><span class={`individual-score-badge score-${tempScore}`}>{tempScore}</span></td>
+              <td style="text-align:center;"><span class={`individual-score-badge score-${respScore}`}>{patient.respiratoryRate}</span></td>
+              <td style="text-align:center;"><span class={`individual-score-badge score-${spo2Score}`}>{patient.oxygenSaturation}</span></td>
+              <td style="text-align:center;"><span class={`individual-score-badge score-${o2Score}`}>{patient.supplementalO2 ? 'Yes' : 'No'}</span></td>
+              <td style="text-align:center;"><span class={`individual-score-badge score-${bpScore}`}>{patient.systolicBP}</span></td>
+              <td style="text-align:center;"><span class={`individual-score-badge score-${pulseScore}`}>{patient.heartRate}</span></td>
+              <td style="text-align:center;"><span class={`individual-score-badge score-${conscScore}`}>{String(patient.consciousness).charAt(0).toUpperCase()}</span></td>
+              <td style="text-align:center;"><span class={`individual-score-badge score-${tempScore}`}>{patient.temperature}</span></td>
             </tr>
           );
         })}
