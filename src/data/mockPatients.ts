@@ -3,7 +3,7 @@ import type { Patient } from '../types/PatientDTO';
 export const patients: Patient[] = [
   {
     id: '1',
-    name: 'John Doe',
+    name: 'Alex Chen',
     age: 65,
     respiratoryRate: 18,
     oxygenSaturation: 95,
