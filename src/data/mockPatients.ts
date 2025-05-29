@@ -102,7 +102,7 @@ export const patients: Patient[] = [
     systolicBP: 125,
     heartRate: 80,
     consciousness: 'Alert',
-    supplementalO2: false,
+    supplementalO2: true,
   },
   {
     id: '9',
